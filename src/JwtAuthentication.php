@@ -50,7 +50,8 @@ class JwtAuthentication
         "path" => null,
         "passthrough" => null,
         "callback" => null,
-        "error" => null
+        "error" => null,
+        "required" => true
     ];
 
     /**
@@ -111,27 +112,28 @@ class JwtAuthentication
             }
         }
 
+
         /* If token cannot be found return with 401 Unauthorized. */
-        if (false === $token = $this->fetchToken($request)) {
+        if ((false === $token = $this->fetchToken($request)) && $this->options["required"]) {
             return $this->error($request, $response, [
-                "message" => $this->message
+              "message" => $this->message
             ])->withStatus(401);
         }
 
         /* If token cannot be decoded return with 401 Unauthorized. */
-        if (false === $decoded = $this->decodeToken($token)) {
+        if ((false === $decoded = $this->decodeToken($token)) && $this->options["required"]) {
             return $this->error($request, $response, [
-                "message" => $this->message,
-                "token" => $token
+              "message" => $this->message,
+              "token" => $token
             ])->withStatus(401);
         }
 
         /* If callback returns false return with 401 Unauthorized. */
-        if (is_callable($this->options["callback"])) {
+        if (is_callable($this->options["callback"]) && $this->options["required"]) {
             $params = ["decoded" => $decoded];
             if (false === $this->options["callback"]($request, $response, $params)) {
                 return $this->error($request, $response, [
-                    "message" => $this->message ? $this->message : "Callback returned false"
+                  "message" => $this->message ? $this->message : "Callback returned false"
                 ])->withStatus(401);
             }
         }
@@ -662,6 +664,29 @@ class JwtAuthentication
     public function setAlgorithm($algorithm)
     {
         $this->options["algorithm"] = $algorithm;
+        return $this;
+    }
+
+
+    /**
+     * Get the required flag
+     *
+     * @return string|string[]
+     */
+    public function getRequired()
+    {
+        return $this->options["required"];
+    }
+
+    /**
+     * Set the required flag
+     *
+     * @param string|string[] $required
+     * @return self
+     */
+    public function setRequired($required)
+    {
+        $this->options["required"] = $required;
         return $this;
     }
 }
